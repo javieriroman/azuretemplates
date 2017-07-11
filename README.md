@@ -1,1 +1,2 @@
 # azuretemplates
+Personal templates
