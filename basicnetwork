@@ -1,0 +1,113 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetworks_Vnet_devops_name": {
+            "defaultValue": "Vnet-devops",
+            "type": "String"
+        },
+        "subnets_dmz_name": {
+            "defaultValue": "dmz",
+            "type": "String"
+        },
+        "subnets_web_name": {
+            "defaultValue": "web",
+            "type": "String"
+        },
+        "subnets_inside_name": {
+            "defaultValue": "inside",
+            "type": "String"
+        }
+  
+    },
+    "variables": {},
+    "resources": [
+        {
+            "comments": "Generalized from resource: '/subscriptions/f2b1698f-450b-49ed-9dd4-855c9597294d/resourceGroups/Devops/providers/Microsoft.Network/virtualNetworks/Vnet-devops'.",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworks_Vnet_devops_name')]",
+            "apiVersion": "2017-06-01",
+            "location": "southcentralus",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "e671a79d-bbf3-4d6d-b752-76b2f6a9e8f6",
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.3.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "inside",
+                        "etag": "W/\"d42cddc7-c198-436a-94a7-1c90f895079c\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "addressPrefix": "10.3.0.0/24"
+                        }
+                    },
+                    {
+                        "name": "dmz",
+                        "etag": "W/\"d42cddc7-c198-436a-94a7-1c90f895079c\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "addressPrefix": "10.3.1.0/24"
+                        }
+                    },
+                    {
+                        "name": "web",
+                        "etag": "W/\"d42cddc7-c198-436a-94a7-1c90f895079c\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "addressPrefix": "10.3.2.0/24"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": []
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/f2b1698f-450b-49ed-9dd4-855c9597294d/resourceGroups/Devops/providers/Microsoft.Network/virtualNetworks/Vnet-devops/subnets/inside'.",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(parameters('virtualNetworks_Vnet_devops_name'), '/', parameters('subnets_inside_name'))]",
+            "apiVersion": "2017-06-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "addressPrefix": "10.3.0.0/24"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_Vnet_devops_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/f2b1698f-450b-49ed-9dd4-855c9597294d/resourceGroups/Devops/providers/Microsoft.Network/virtualNetworks/Vnet-devops/subnets/dmz'.",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(parameters('virtualNetworks_Vnet_devops_name'), '/', parameters('subnets_dmz_name'))]",
+            "apiVersion": "2017-06-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "addressPrefix": "10.3.1.0/24"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_Vnet_devops_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/f2b1698f-450b-49ed-9dd4-855c9597294d/resourceGroups/Devops/providers/Microsoft.Network/virtualNetworks/Vnet-devops/subnets/web'.",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(parameters('virtualNetworks_Vnet_devops_name'), '/', parameters('subnets_web_name'))]",
+            "apiVersion": "2017-06-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "addressPrefix": "10.3.2.0/24"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_Vnet_devops_name'))]"
+            ]
+        }
+    ]
+}
