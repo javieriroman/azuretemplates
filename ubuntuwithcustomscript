@@ -2,6 +2,10 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "virtualMachineName": {
+        "defaultValue": "web01",
+        "type": "string"
+    },
     "virtualMachineSize": {
         "defaultValue": "Basic_A0",
         "type": "string"
@@ -76,7 +80,6 @@
     }
   },
   "variables": {
-    "virtualMachineName": "web01",
     "location": "[ resourceGroup().location ]",
     "vnetId": "[resourceId('Devops','Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
