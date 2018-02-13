@@ -2,10 +2,34 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "storageAccountName": {
+        "storageAccountDiagnosticName": {
             "type": "String",
             "metadata": {
-                "description": "Name of storage account"
+                "description": "Name of storage account"}
+            },
+       "diagnosticStorageAccountType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Premium_LRS",
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Standard_RAGRS" 
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "type of storage account"
+            }
+        },
+        "managedStorageAccountType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Premium_LRS",
+                "Standard_LRS"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "type of storage account"
             }
         },
         "adminUsername": {
@@ -72,11 +96,25 @@
                 "description": "Image SKU"
             }
         },
+        "vmSize": {
+            "defaultValue": "Standard_D2_v3",
+            "type": "String",
+            "metadata": {
+                "description": "Size of the VM"
+            }
+        },
         "lbName": {
             "defaultValue": "myLB",
             "type": "String",
             "metadata": {
                 "description": "Load Balancer name"
+            }
+        },
+        "lbtype": {
+            "defaultValue": "Basic",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer type"
             }
         },
         "nicNamePrefix": {
@@ -100,21 +138,21 @@
                 "description": "VNET name"
             }
         },
-        "vmSize": {
-            "defaultValue": "Standard_D2_v3",
-            "type": "String",
-            "metadata": {
-                "description": "Size of the VM"
-            }
+         "networkSecurityGroupName": {
+          "defaultValue": "new-nsg",
+           "type": "string",
+           "metadata": {
+            "description": "Network security group name"
+        }
         }
     },
     "variables": {
-        "storageAccountType": "Standard_LRS",
         "availabilitySetName": "myAvSet",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet-1",
         "subnetPrefix": "10.0.0.0/24",
         "publicIPAddressType": "Dynamic",
+        "nsgid" : "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
         "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
@@ -128,9 +166,10 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "sku": {
-                "name": "[variables('storageAccountType')]"
+                "name": "[parameters('diagnosticStorageAccountType')]"
             },
-            "name": "[parameters('storageAccountName')]",
+            "kind" :"StorageV2",
+            "name": "[parameters('storageAccountDiagnosticName')]",
             "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "properties": {}
@@ -208,13 +247,22 @@
                             "loadBalancerInboundNatRules": [
                                 {
                                     "id": "[concat(variables('lbID'),'/inboundNatRules/RDP-VM', copyindex())]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-VM', copyindex())]"
                                 }
                             ]
                         }
                     }
-                ]
+                ],
+                "networkSecurityGroup": {
+
+                    "id": "[variables('nsgid')]"
+          
+                  }
             },
             "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
                 "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
             ]
@@ -222,6 +270,9 @@
         {
             "type": "Microsoft.Network/loadBalancers",
             "name": "[parameters('lbName')]",
+            "sku": {
+                "name": "[parameters('lbtype')]"
+            },
             "apiVersion": "2017-11-01",
             "location": "[resourceGroup().location]",
             "properties": {
@@ -262,6 +313,30 @@
                             "protocol": "tcp",
                             "frontendPort": 50002,
                             "backendPort": 3389,
+                            "enableFloatingIP": false
+                        }
+                    },
+                    {
+                        "name": "SSH-VM0",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 60001,
+                            "backendPort": 22,
+                            "enableFloatingIP": false
+                        }
+                    },
+                    {
+                        "name": "SSH-VM1",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 60002,
+                            "backendPort": 22,
                             "enableFloatingIP": false
                         }
                     }
@@ -330,11 +405,11 @@
                         "offer": "[parameters('imageOffer')]",
                         "sku": "[parameters('imageSKU')]",
                         "version": "latest"
-                     },
+                    },
                     "osDisk": {
                         "createOption": "FromImage",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS"
+                            "storageAccountType": "[parameters('diagnosticStorageAccountType')]"
                         }
                     }
                 },
@@ -348,15 +423,109 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": "true",
-                        "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+                        "storageUri": "[concat('http://',parameters('storageAccountDiagnosticName'),'.blob.core.windows.net')]"
                     }
                 }
             },
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountDiagnosticName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNamePrefix'), copyindex())]",
                 "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
             ]
+        },
+        {
+
+            "name": "[parameters('networkSecurityGroupName')]",
+      
+            "type": "Microsoft.Network/networkSecurityGroups",
+      
+            "apiVersion": "2016-09-01",
+      
+            "location": "[resourceGroup().location]",
+      
+            "properties": {
+      
+              "securityRules": [
+      
+                {
+      
+                  "name": "HTTP",
+      
+                  "properties": {
+      
+                    "protocol": "TCP",
+      
+                    "sourcePortRange": "*",
+      
+                    "destinationPortRange": "80",
+      
+                    "sourceAddressPrefix": "*",
+      
+                    "destinationAddressPrefix": "*",
+      
+                    "access": "Allow",
+      
+                    "priority": 100,
+      
+                    "direction": "Inbound"
+      
+                  }
+      
+                },{
+      
+                    "name": "ssh",
+        
+                    "properties": {
+        
+                      "protocol": "TCP",
+        
+                      "sourcePortRange": "*",
+        
+                      "destinationPortRange": "22",
+        
+                      "sourceAddressPrefix": "*",
+        
+                      "destinationAddressPrefix": "*",
+        
+                      "access": "Allow",
+        
+                      "priority": 1001,
+        
+                      "direction": "Inbound"
+        
+                    }
+        
+                  },
+      
+                {
+      
+                  "name": "default-allow-rdp",
+      
+                  "properties": {
+      
+                    "priority": 1000,
+      
+                    "sourceAddressPrefix": "*",
+      
+                    "protocol": "TCP",
+      
+                    "destinationPortRange": "3389",
+      
+                    "access": "Allow",
+      
+                    "direction": "Inbound",
+      
+                    "sourcePortRange": "*",
+      
+                    "destinationAddressPrefix": "*"
+      
+                  }
+      
+                }
+      
+              ]
+      
+            }     
         }
     ]
 }
