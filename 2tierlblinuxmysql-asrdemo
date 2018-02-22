@@ -1,0 +1,730 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountDiagnosticName": {
+            "type": "String",
+            "metadata": {
+                "description": "Name of storage account"}
+            },
+       "diagnosticStorageAccountType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Premium_LRS",
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Standard_RAGRS" 
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "type of storage account"
+            }
+        },
+        "managedStorageAccountType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Premium_LRS",
+                "Standard_LRS"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "type of storage account"
+            }
+        },
+        "adminUsername": {
+            "defaultValue": "javier",
+            "type": "String",
+            "metadata": {
+                "description": "Admin username"
+            }
+        },
+        "adminPassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Admin password"
+            }
+        },
+        "dnsNameforLBIP": {
+            "type": "String",
+            "metadata": {
+                "description": "DNS for Load Balancer IP"
+            }
+        },
+        "vmNamePrefix": {
+            "defaultValue": "myVM",
+            "type": "String",
+            "metadata": {
+                "description": "Prefix to use for VM names"
+            }
+        },"vmNameMysql": {
+            "defaultValue": "myMysql",
+            "type": "String",
+            "metadata": {
+                "description": "Prefix to use for VM names"
+            }
+        },
+        "imagePublisher": {
+            "defaultValue": "Canonical",
+            "allowedValues": [
+                "MicrosoftWindowsServer",
+                "Canonical",
+                "openlogic"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "defaultValue": "ubuntuserver",
+            "allowedValues": [
+                "WindowsServer",
+                "ubuntuserver",
+                "centos"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "defaultValue": "16.04-LTS",
+            "allowedValues": [
+                "6.9",
+                "7.4",
+                "14.04-LTS",
+                "16.04-LTS",
+                "2012-R2-Datacenter",
+                "2016-Datacenter"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Image SKU"
+            }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_D2_v3",
+            "type": "String",
+            "metadata": {
+                "description": "Size of the VM"
+            }
+        },
+        "lbName": {
+            "defaultValue": "myLB",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer name"
+            }
+        },
+        "lbtype": {
+            "defaultValue": "Basic",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer type"
+            }
+        },
+        "nicNamePrefix": {
+            "defaultValue": "nic",
+            "type": "String",
+            "metadata": {
+                "description": "Network Interface name prefix"
+            }
+        },
+        "nicNameMysql": {
+            "defaultValue": "mysqlnic",
+            "type": "String",
+            "metadata": {
+                "description": "Network Interface name for mysql"
+            }
+        },
+        "publicIPAddressName": {
+            "defaultValue": "myPublicIP",
+            "type": "String",
+            "metadata": {
+                "description": "Public IP Name"
+            }
+        },
+        "vnetName": {
+            "defaultValue": "myVNET",
+            "type": "String",
+            "metadata": {
+                "description": "VNET name"
+            }
+        },
+        "extensionName": {
+            "defaultValue": "myextension",
+            "type": "String",
+            "metadata": {
+                "description": "VM extensionName name"
+            }
+        },
+         "networkSecurityGroupName": {
+          "defaultValue": "new-nsg",
+           "type": "string",
+           "metadata": {
+            "description": "Network security group name"
+        }
+        }
+    },
+    "variables": {
+        "availabilitySetName": "myAvSet",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetName": "Subnet-1",
+        "subnetPrefix": "10.0.0.0/24",
+        "publicIPAddressType": "Dynamic",
+        "nsgid" : "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
+        "numberOfInstances": 2,
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPool1')]",
+        "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "[parameters('diagnosticStorageAccountType')]"
+            },
+            "kind" :"StorageV2",
+            "name": "[parameters('storageAccountDiagnosticName')]",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "sku": {
+                "name": "Aligned"
+            },
+            "name": "[variables('availabilitySetName')]",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "platformFaultDomainCount": "2",
+                "platformUpdateDomainCount": "2",
+                "virtualMachines": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddressName')]",
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('dnsNameforLBIP')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnetName')]",
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('nicNamePrefix'), copyindex())]",
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[variables('numberOfInstances')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                                }
+                            ],
+                            "loadBalancerInboundNatRules": [
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/RDP-VM', copyindex())]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-VM', copyindex())]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+
+                    "id": "[variables('nsgid')]"
+          
+                  }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('nicNameMysql')]",
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                            
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+
+                    "id": "[variables('nsgid')]"
+          
+                  }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[parameters('lbName')]",
+            "sku": {
+                "name": "[parameters('lbtype')]"
+            },
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressID')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "BackendPool1"
+                    }
+                ],
+                "inboundNatRules": [
+                    {
+                        "name": "RDP-VM0",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 50001,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false
+                        }
+                    },
+                    {
+                        "name": "RDP-VM1",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 50002,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false
+                        }
+                    },
+                    {
+                        "name": "SSH-VM0",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 60001,
+                            "backendPort": 22,
+                            "enableFloatingIP": false
+                        }
+                    },
+                    {
+                        "name": "SSH-VM1",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 60002,
+                            "backendPort": 22,
+                            "enableFloatingIP": false
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "LBRule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('lbPoolID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 80,
+                            "backendPort": 80,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "probe": {
+                                "id": "[variables('lbProbeID')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "tcpProbe",
+                        "properties": {
+                            "protocol": "tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[variables('numberOfInstances')]"
+            },
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmNamePrefix'), copyIndex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "16.04.201611220"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('diagnosticStorageAccountType')]"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicNamePrefix'),copyindex()))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[concat('http://',parameters('storageAccountDiagnosticName'),'.blob.core.windows.net')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountDiagnosticName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNamePrefix'), copyindex())]",
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmNameMysql'))]",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmNameMysql'))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "16.04.201611220"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('diagnosticStorageAccountType')]"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicNameMysql')))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[concat('http://',parameters('storageAccountDiagnosticName'),'.blob.core.windows.net')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountDiagnosticName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNameMysql'))]"
+            ]
+        },
+        {
+
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+      
+            "name": "[concat(parameters('vmNamePrefix'), copyindex(),'/', parameters('extensionName'))]",
+      
+            "apiVersion": "2015-06-15",
+      
+            "location": "[resourceGroup().location]",
+      
+            "copy": {
+                "name": "extensionsLoop",
+                "count": "[variables('numberOfInstances')]"
+            },
+        
+            "properties": {
+      
+              "publisher": "Microsoft.Azure.Extensions",
+      
+              "type": "CustomScript",
+      
+              "typeHandlerVersion": "2.0",
+      
+              "autoUpgradeMinorVersion": true,
+      
+              "settings": {
+      
+                "fileUris": ["https://raw.githubusercontent.com/javieriroman/customscripts/master/apacheubuntu.sh"],
+        
+                "commandToExecute": "sh apacheubuntu.sh"
+      
+              }
+              
+            },
+            "dependsOn": [
+      
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), copyindex())]"
+        
+              ]
+      
+          },
+          {
+
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+      
+            "name": "[concat(parameters('vmNameMysql'),'/',parameters('extensionName'))]",
+      
+            "apiVersion": "2015-06-15",
+      
+            "location": "[resourceGroup().location]",
+        
+            "properties": {
+      
+              "publisher": "Microsoft.Azure.Extensions",
+      
+              "type": "CustomScript",
+      
+              "typeHandlerVersion": "2.0",
+      
+              "autoUpgradeMinorVersion": true,
+      
+              "settings": {
+      
+                "fileUris": ["https://raw.githubusercontent.com/javieriroman/customscripts/master/mysqlubuntu.sh"],
+        
+                "commandToExecute": "sh mysqlubuntu.sh"
+      
+              }
+            
+            },
+            "dependsOn": [
+      
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameMysql'))]"
+        
+              ]
+          },
+        {
+
+            "name": "[parameters('networkSecurityGroupName')]",
+      
+            "type": "Microsoft.Network/networkSecurityGroups",
+      
+            "apiVersion": "2016-09-01",
+      
+            "location": "[resourceGroup().location]",
+      
+            "properties": {
+      
+              "securityRules": [
+      
+                {
+      
+                  "name": "HTTP",
+      
+                  "properties": {
+      
+                    "protocol": "TCP",
+      
+                    "sourcePortRange": "*",
+      
+                    "destinationPortRange": "80",
+      
+                    "sourceAddressPrefix": "*",
+      
+                    "destinationAddressPrefix": "*",
+      
+                    "access": "Allow",
+      
+                    "priority": 1003,
+      
+                    "direction": "Inbound"
+      
+                  }
+      
+                },
+                {
+      
+                    "name": "Mysql",
+        
+                    "properties": {
+        
+                      "protocol": "TCP",
+        
+                      "sourcePortRange": "*",
+        
+                      "destinationPortRange": "3306",
+        
+                      "sourceAddressPrefix": "*",
+        
+                      "destinationAddressPrefix": "*",
+        
+                      "access": "Allow",
+        
+                      "priority": 1002,
+        
+                      "direction": "Inbound"
+        
+                    }
+        
+                  },
+                {
+      
+                    "name": "ssh",
+        
+                    "properties": {
+        
+                      "protocol": "TCP",
+        
+                      "sourcePortRange": "*",
+        
+                      "destinationPortRange": "22",
+        
+                      "sourceAddressPrefix": "*",
+        
+                      "destinationAddressPrefix": "*",
+        
+                      "access": "Allow",
+        
+                      "priority": 1001,
+        
+                      "direction": "Inbound"
+        
+                    }
+        
+                  },
+      
+                {
+      
+                  "name": "default-allow-rdp",
+      
+                  "properties": {
+      
+                    "priority": 1000,
+      
+                    "sourceAddressPrefix": "*",
+      
+                    "protocol": "TCP",
+      
+                    "destinationPortRange": "3389",
+      
+                    "access": "Allow",
+      
+                    "direction": "Inbound",
+      
+                    "sourcePortRange": "*",
+      
+                    "destinationAddressPrefix": "*"
+      
+                  }
+      
+                }
+      
+              ]
+      
+            }     
+        }
+    ]
+}
