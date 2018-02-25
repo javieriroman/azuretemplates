@@ -3,6 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "storageAccountDiagnosticName": {
+            "defaultValue": "asrmockdiag",
             "type": "String",
             "metadata": {
                 "description": "Name of storage account"}
@@ -46,6 +47,7 @@
             }
         },
         "dnsNameforLBIP": {
+            "defaultValue": "asrmockdns",
             "type": "String",
             "metadata": {
                 "description": "DNS for Load Balancer IP"
