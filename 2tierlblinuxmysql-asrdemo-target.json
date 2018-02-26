@@ -1,0 +1,346 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsNameforLBIP": {
+            "defaultValue": "mylbasrdns",
+            "type": "String",
+            "metadata": {
+                "description": "DNS for Load Balancer IP"
+            }
+        },
+        "lbName": {
+            "defaultValue": "myLB-asr",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer name"
+            }
+        },
+        "lbtype": {
+            "defaultValue": "Basic",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer type"
+            }
+        },
+        "publicIPAddressName": {
+            "defaultValue": "myPublicIPasr",
+            "type": "String",
+            "metadata": {
+                "description": "Public IP Name"
+            }
+        },
+        "networkSecurityGroupName": {
+         "defaultValue": "new-nsg-asr",
+          "type": "string",
+          "metadata": {
+           "description": "Network security group name"
+       }
+       },
+        "vaults_asr_vault_name": {
+            "defaultValue": "asr-vault",
+            "type": "String"
+        },
+        "virtualNetworks_myVNET_asr_name": {
+            "defaultValue": "myVNET-asr",
+            "type": "String"
+        },
+        "availabilitySets_MYAVSET_asr_name": {
+            "defaultValue": "MYAVSET-asr",
+            "type": "String"
+        },
+        "subnets_Subnet_1_name": {
+            "defaultValue": "Subnet-1",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "addressprefixforsubnet" : "10.0.0.0/24",
+        "addressprefixforvnet" : "10.0.0.0/16",
+        "publicIPAddressType": "Dynamic",
+        "nsgid" : "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPool1')]",
+        "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "sku": {
+                "name": "Aligned"
+            },
+            "name": "[parameters('availabilitySets_MYAVSET_asr_name')]",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "platformUpdateDomainCount": 2,
+                "platformFaultDomainCount": 2,
+                "virtualMachines": []
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworks_myVNET_asr_name')]",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressprefixforvnet')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": []
+                },
+                "subnets": [
+                    {
+                        "name": "Subnet-1",
+                        "properties": {
+                            "addressPrefix": "[variables('addressprefixforsubnet')]"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults",
+            "sku": {
+                "name": "RS0",
+                "tier": "Standard"
+            },
+            "name": "[parameters('vaults_asr_vault_name')]",
+            "apiVersion": "2017-07-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {},
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddressName')]",
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('dnsNameforLBIP')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[parameters('lbName')]",
+            "sku": {
+                "name": "[parameters('lbtype')]"
+            },
+            "apiVersion": "2017-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressID')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "BackendPool1"
+                    }
+                ],
+                "inboundNatRules": [
+                    {
+                        "name": "SSH-VM1",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 60001,
+                            "backendPort": 22,
+                            "enableFloatingIP": false
+                        }
+                    },
+                    {
+                        "name": "SSH-VM0",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 60002,
+                            "backendPort": 22,
+                            "enableFloatingIP": false
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "LBRule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('lbPoolID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 80,
+                            "backendPort": 80,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "probe": {
+                                "id": "[variables('lbProbeID')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "tcpProbe",
+                        "properties": {
+                            "protocol": "tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+            ]
+        },
+        {
+
+            "name": "[parameters('networkSecurityGroupName')]",
+      
+            "type": "Microsoft.Network/networkSecurityGroups",
+      
+            "apiVersion": "2016-09-01",
+      
+            "location": "[resourceGroup().location]",
+      
+            "properties": {
+      
+              "securityRules": [
+      
+                {
+      
+                  "name": "HTTP",
+      
+                  "properties": {
+      
+                    "protocol": "TCP",
+      
+                    "sourcePortRange": "*",
+      
+                    "destinationPortRange": "80",
+      
+                    "sourceAddressPrefix": "*",
+      
+                    "destinationAddressPrefix": "*",
+      
+                    "access": "Allow",
+      
+                    "priority": 1003,
+      
+                    "direction": "Inbound"
+      
+                  }
+      
+                },
+                {
+      
+                    "name": "Mysql",
+        
+                    "properties": {
+        
+                      "protocol": "TCP",
+        
+                      "sourcePortRange": "*",
+        
+                      "destinationPortRange": "3306",
+        
+                      "sourceAddressPrefix": "*",
+        
+                      "destinationAddressPrefix": "*",
+        
+                      "access": "Allow",
+        
+                      "priority": 1002,
+        
+                      "direction": "Inbound"
+        
+                    }
+        
+                  },
+                {
+      
+                    "name": "ssh",
+        
+                    "properties": {
+        
+                      "protocol": "TCP",
+        
+                      "sourcePortRange": "*",
+        
+                      "destinationPortRange": "22",
+        
+                      "sourceAddressPrefix": "*",
+        
+                      "destinationAddressPrefix": "*",
+        
+                      "access": "Allow",
+        
+                      "priority": 1001,
+        
+                      "direction": "Inbound"
+        
+                    }
+        
+                  },
+      
+                {
+      
+                  "name": "default-allow-rdp",
+      
+                  "properties": {
+      
+                    "priority": 1000,
+      
+                    "sourceAddressPrefix": "*",
+      
+                    "protocol": "TCP",
+      
+                    "destinationPortRange": "3389",
+      
+                    "access": "Allow",
+      
+                    "direction": "Inbound",
+      
+                    "sourcePortRange": "*",
+      
+                    "destinationAddressPrefix": "*"
+      
+                  }
+      
+                }
+      
+              ]
+      
+            }     
+        }
+    ]
+}
