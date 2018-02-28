@@ -1,0 +1,94 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "automationAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of your Automation Account"
+            }
+        },
+        "automationRegion": {
+            "type": "string",
+            "allowedValues": [
+                "westeurope",
+                "southeastasia",
+                "eastus2",
+                "southcentralus",
+                "japaneast",
+                "northeurope",
+                "canadacentral",
+                "australiasoutheast",
+                "centralindia",
+                "westcentralus"
+            ],
+            "metadata": {
+                "description": "Specify the region for your automation account"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/asr-automation-recovery",
+            "metadata": {
+                "description": "URI to artifacts location"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+            }
+        },
+        "dnsNameforLBIP": {
+            "defaultValue": "mylbasrdns",
+            "type": "String",
+            "metadata": {
+                "description": "DNS for Load Balancer IP"
+            }
+        },
+        "lbName": {
+            "defaultValue": "myLB-asr",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer name"
+            }
+        },
+        "lbtype": {
+            "defaultValue": "Basic",
+            "type": "String",
+            "metadata": {
+                "description": "Load Balancer type"
+            }
+        },
+        "publicIPAddressName": {
+            "defaultValue": "myPublicIPasr",
+            "type": "String",
+            "metadata": {
+                "description": "Public IP Name"
+            }
+        },
+        "networkSecurityGroupName": {
+         "defaultValue": "new-nsg-asr",
+          "type": "string",
+          "metadata": {
+           "description": "Network security group name"
+       }
+       },
+        "vaults_asr_vault_name": {
+            "defaultValue": "asr-vault",
+            "type": "String"
+        },
+        "virtualNetworks_myVNET_asr_name": {
+            "defaultValue": "myVNET-asr",
+            "type": "String"
+        },
+        "availabilitySets_MYAVSET_asr_name": {
+            "defaultValue": "MYAVSET-asr",
+            "type": "String"
+        },
+        "subnets_Subnet_1_name": {
+            "defaultValue": "Subnet-1",
+            "type": "String"
+        }
+    },
