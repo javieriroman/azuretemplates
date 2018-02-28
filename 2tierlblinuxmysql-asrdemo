@@ -34,7 +34,6 @@
         }
     },
     "adminUsername": {
-        "defaultValue": "javier",
         "type": "String",
         "metadata": {
             "description": "Admin username"
