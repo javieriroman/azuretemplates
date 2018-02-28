@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "storageAccountDiagnosticName": {
-            "defaultValue": "asrmockdiag2",
+            "Value": "asrmockdiag2",
             "type": "String",
             "metadata": {
                 "description": "Name of storage account"}
             },
        "diagnosticStorageAccountType": {
-            "defaultValue": "Standard_LRS",
+            "Value": "Standard_LRS",
             "allowedValues": [
                 "Premium_LRS",
                 "Standard_LRS",
@@ -23,7 +23,7 @@
             }
         },
         "managedStorageAccountType": {
-            "defaultValue": "Standard_LRS",
+            "Value": "Standard_LRS",
             "allowedValues": [
                 "Premium_LRS",
                 "Standard_LRS"
@@ -46,27 +46,27 @@
             }
         },
         "dnsNameforLBIP": {
-            "defaultValue": "asrmockdns2",
+            "Value": "asrmockdns2",
             "type": "String",
             "metadata": {
                 "description": "DNS for Load Balancer IP"
             }
         },
         "vmNamePrefix": {
-            "defaultValue": "myVM",
+            "Value": "myVM",
             "type": "String",
             "metadata": {
                 "description": "Prefix to use for VM names"
             }
         },"vmNameMysql": {
-            "defaultValue": "myMysql",
+            "Value": "myMysql",
             "type": "String",
             "metadata": {
                 "description": "Prefix to use for VM names"
             }
         },
         "imagePublisher": {
-            "defaultValue": "Canonical",
+            "Value": "Canonical",
             "allowedValues": [
                 "MicrosoftWindowsServer",
                 "Canonical",
@@ -78,7 +78,7 @@
             }
         },
         "imageOffer": {
-            "defaultValue": "ubuntuserver",
+            "Value": "ubuntuserver",
             "allowedValues": [
                 "WindowsServer",
                 "ubuntuserver",
@@ -90,7 +90,7 @@
             }
         },
         "imageSKU": {
-            "defaultValue": "16.04-LTS",
+            "Value": "16.04-LTS",
             "allowedValues": [
                 "6.9",
                 "7.4",
@@ -105,70 +105,70 @@
             }
         },
         "vmSize": {
-            "defaultValue": "Standard_D2_v3",
+            "Value": "Standard_D2_v3",
             "type": "String",
             "metadata": {
                 "description": "Size of the VM"
             }
         },
         "lbName": {
-            "defaultValue": "myLB2",
+            "Value": "myLB2",
             "type": "String",
             "metadata": {
                 "description": "Load Balancer name"
             }
         },
         "lbtype": {
-            "defaultValue": "Basic",
+            "Value": "Basic",
             "type": "String",
             "metadata": {
                 "description": "Load Balancer type"
             }
         },
         "nicNamePrefix": {
-            "defaultValue": "nic",
+            "Value": "nic",
             "type": "String",
             "metadata": {
                 "description": "Network Interface name prefix"
             }
         },
         "nicNameMysql": {
-            "defaultValue": "mysqlnic",
+            "Value": "mysqlnic",
             "type": "String",
             "metadata": {
                 "description": "Network Interface name for mysql"
             }
         },
         "publicIPAddressName": {
-            "defaultValue": "myPublicIP2",
+            "Value": "myPublicIP2",
             "type": "String",
             "metadata": {
                 "description": "Public IP Name"
             }
         },
         "vnetName": {
-            "defaultValue": "myVNET2",
+            "Value": "myVNET2",
             "type": "String",
             "metadata": {
                 "description": "VNET name"
             }
         },
         "extensionName": {
-            "defaultValue": "myextension",
+            "Value": "myextension",
             "type": "String",
             "metadata": {
                 "description": "VM extensionName name"
             }
         },
          "networkSecurityGroupName": {
-          "defaultValue": "new-nsg2",
+          "Value": "new-nsg2",
            "type": "string",
            "metadata": {
             "description": "Network security group name"
         }
         },
         "trafficManagerProfiles_asrdemoarrow_name": {
-            "defaultValue": "asrdemoarrow2",
+            "Value": "asrdemoarrow2",
             "type": "String"
         }
     }
