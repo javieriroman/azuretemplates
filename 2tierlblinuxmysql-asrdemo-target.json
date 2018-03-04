@@ -41,14 +41,14 @@
             }
         },
         "dnsNameforLBIP": {
-            "defaultValue": "mylbasrdns",
+            "defaultValue": "[concat('mylbasrdns', uniqueString(resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "DNS for Load Balancer IP"
             }
         },
         "lbName": {
-            "defaultValue": "myLB-asr",
+            "defaultValue": "[concat('myLB-asr', uniqueString(resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "Load Balancer name"
