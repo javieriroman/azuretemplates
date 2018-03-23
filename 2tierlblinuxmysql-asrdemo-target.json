@@ -421,7 +421,7 @@
                 ],
                 "inboundNatRules": [
                     {
-                        "name": "SSH-VM1",
+                        "name": "SSH-VM0",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[variables('frontEndIPConfigID')]"
@@ -433,7 +433,7 @@
                         }
                     },
                     {
-                        "name": "SSH-VM0",
+                        "name": "SSH-VM1",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[variables('frontEndIPConfigID')]"
