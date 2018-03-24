@@ -41,14 +41,14 @@
             }
         },
         "dnsNameforLBIP": {
-            "defaultValue": "mylbasrdns2",
+            "defaultValue": "[concat('mylbasrdns', uniqueString(resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "DNS for Load Balancer IP"
             }
         },
         "lbName": {
-            "defaultValue": "myLB-asr2",
+            "defaultValue": "[concat('myLB-asr2', uniqueString(resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "Load Balancer name"
@@ -62,7 +62,7 @@
             }
         },
         "publicIPAddressName": {
-            "defaultValue": "myPublicIPasr2",
+            "defaultValue": "myPublicIPasr",
             "type": "String",
             "metadata": {
                 "description": "Public IP Name"
@@ -76,7 +76,7 @@
        }
        },
         "vaults_asr_vault_name": {
-            "defaultValue": "asr-vault2",
+            "defaultValue": "asr-vault",
             "type": "String"
         },
         "virtualNetworks_myVNET_asr_name": {
@@ -421,7 +421,7 @@
                 ],
                 "inboundNatRules": [
                     {
-                        "name": "SSH-VM1",
+                        "name": "SSH-VM0",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[variables('frontEndIPConfigID')]"
@@ -433,7 +433,7 @@
                         }
                     },
                     {
-                        "name": "SSH-VM0",
+                        "name": "SSH-VM1",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[variables('frontEndIPConfigID')]"
