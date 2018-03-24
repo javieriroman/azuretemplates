@@ -3,7 +3,7 @@
 "contentVersion": "1.0.0.0",
 "parameters": {
     "storageAccountDiagnosticName": {
-        "defaultValue": "asrmockdiag2",
+        "defaultValue": "[concat('asrmockdiag', uniqueString(resourceGroup().id))]",
         "type": "String",
         "metadata": {
             "description": "Name of storage account"}
@@ -46,7 +46,7 @@
         }
     },
     "dnsNameforLBIP": {
-        "defaultValue": "asrmockdns2",
+        "defaultValue": "[concat('asrmockdns', uniqueString(resourceGroup().id))]",
         "type": "String",
         "metadata": {
             "description": "DNS for Load Balancer IP"
@@ -112,7 +112,7 @@
         }
     },
     "lbName": {
-        "defaultValue": "myLB2",
+        "defaultValue": "[concat('myLB', uniqueString(resourceGroup().id))]",
         "type": "String",
         "metadata": {
             "description": "Load Balancer name"
@@ -140,7 +140,7 @@
         }
     },
     "publicIPAddressName": {
-        "defaultValue": "myPublicIP2",
+        "defaultValue": "myPublicIP",
         "type": "String",
         "metadata": {
             "description": "Public IP Name"
@@ -168,12 +168,12 @@
     }
     },
     "trafficManagerProfiles_asrdemoarrow_name": {
-        "defaultValue": "asrdemoarrow2",
+        "defaultValue": "[concat('asrdemoarrow', uniqueString(resourceGroup().id))]",
         "type": "String"
     }
 },
 "variables": {
-    "availabilitySetName": "myAvSet",
+    "availabilitySetName": "myAvSet2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
@@ -308,6 +308,9 @@
                     }
                 }
             ],
+            "dnsSettings": {
+                    "internalDnsNameLabel": "mysqlserver"
+             },
             "networkSecurityGroup": {
 
                 "id": "[variables('nsgid')]"
