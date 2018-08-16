@@ -306,6 +306,9 @@
                         }
                     }
                 ],
+                "dnsSettings": {
+                    "internalDnsNameLabel": "mysqlserver"
+                },
                 "networkSecurityGroup": {
 
                     "id": "[variables('nsgid')]"
