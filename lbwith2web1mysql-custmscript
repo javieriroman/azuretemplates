@@ -502,7 +502,7 @@
                         "publisher": "[parameters('imagePublisher')]",
                         "offer": "[parameters('imageOffer')]",
                         "sku": "[parameters('imageSKU')]",
-                        "version": "latest"
+                        "version": "16.04.201611220"
                     },
                     "osDisk": {
                         "createOption": "FromImage",
