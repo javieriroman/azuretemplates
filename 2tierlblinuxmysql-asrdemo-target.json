@@ -76,7 +76,7 @@
        }
        },
         "vaults_asr_vault_name": {
-            "defaultValue": "asr-vault",
+            "defaultValue": "asr-vault2018",
             "type": "String"
         },
         "virtualNetworks_myVNET_asr_name": {
